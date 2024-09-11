@@ -11,6 +11,7 @@ namespace WpfApp
     public partial class MainWindow : Window
     {
         private Stack<FlowDocument> undoStack = new Stack<FlowDocument>();
+        private bool isFirstLetterInLine = true;
         private const string PlaceholderText = "请输入注释...";
 
         public MainWindow()
@@ -25,16 +26,25 @@ namespace WpfApp
 
         private void LetterButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button)
+            if (sender is not Button button) return;
+
+            string outputText = button.Tag?.ToString() ?? string.Empty;
+
+            if (!isFirstLetterInLine)
             {
-                string outputText = button.Tag?.ToString() ?? string.Empty;
-                LogAppendText(" " + outputText);
+                LogAppendText("  " + outputText);
+            }
+            else
+            {
+                LogAppendText(outputText);
+                isFirstLetterInLine = false;
             }
         }
 
         private void NewlineButton_Click(object sender, RoutedEventArgs e)
         {
             LogAppendText(Environment.NewLine);
+            isFirstLetterInLine = true;
         }
 
         private void RemarkButton_Click(object sender, RoutedEventArgs e)

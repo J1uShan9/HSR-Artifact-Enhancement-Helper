@@ -17,7 +17,7 @@
 
         <!-- Log 显示框 -->
         <RichTextBox Name="LogTextBox" Grid.Row="0" Grid.Column="0" Margin="10" 
-                     IsReadOnly="True" VerticalScrollBarVisibility="Auto" />
+                     IsReadOnly="False" VerticalScrollBarVisibility="Auto" />
 
         <!-- 字母按键区域 -->
         <UniformGrid Columns="4" Rows="3" Grid.Row="1" Grid.Column="0" Margin="10">
@@ -38,7 +38,7 @@
 
         <!-- 注释输入框 -->
         <RichTextBox Name="RemarkTextBox" Grid.Row="2" Grid.Column="0" Width="Auto" Height="18" Margin="10" 
-                     VerticalAlignment="Center" HorizontalAlignment="Stretch" />
+                     VerticalAlignment="Center" HorizontalAlignment="Stretch" AcceptsReturn="False" />
 
         <!-- 功能按键区域 -->
         <UniformGrid Columns="4" Rows="1" Grid.Row="3" Grid.Column="0" Margin="10">
@@ -58,13 +58,11 @@
                 <TextBlock Text="第三优先级: 效果命中xm，效果抵抗xd"/>
                 <TextBlock Text="第四优先级: 速度v"/>
                 <TextBlock Text="第五优先级: 击破j"/>
-                <TextBlock Text="(当强化的遗器副词条无xm/xd时，v晋升到第三优先级)"/>
                 <TextBlock Text=""/>
                 <TextBlock Text="无效区间中的优先级:" Foreground="Red"/>
                 <TextBlock Text="第一优先级: 大小攻gG，大小防fF，大小生sS"/>
                 <TextBlock Text="第二优先级: 击破j"/>
                 <TextBlock Text="第三优先级: 区间外的其他词条"/>
-                <TextBlock Text="(导致无效区间走势很乱)"/>
             </StackPanel>
         </Border>
         
