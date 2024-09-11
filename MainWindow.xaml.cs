@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace WpfApp
@@ -11,15 +12,20 @@ namespace WpfApp
     public partial class MainWindow : Window
     {
         private Stack<FlowDocument> undoStack = new Stack<FlowDocument>();
+        private Stack<bool> isFirstLetterInLineStack = new Stack<bool>();
         private bool isFirstLetterInLine = true;
+
         private const string PlaceholderText = "请输入注释...";
 
         public MainWindow()
         {
             InitializeComponent();
+            SetRemarkTextBoxPlaceholder();
+
             RemarkTextBox.GotFocus += RemarkTextBox_GotFocus;
             RemarkTextBox.LostFocus += RemarkTextBox_LostFocus;
-            SetRemarkTextBoxPlaceholder();
+
+            LogTextBox.KeyDown += LogTextBox_KeyDown;
         }
 
         // Button_Click
@@ -52,7 +58,9 @@ namespace WpfApp
             string remarkText = GetRemarkTextBoxText();
             if (!string.IsNullOrEmpty(remarkText) && remarkText != PlaceholderText)
             {
-                LogAppendText("(" + remarkText + ")", Brushes.Gray);
+                LogAppendText("(", Brushes.Black);
+                LogAppendText(remarkText, Brushes.Gray);
+                LogAppendText(")", Brushes.Black);
                 RemarkTextBox.Document.Blocks.Clear();
                 SetRemarkTextBoxPlaceholder();
             }
@@ -72,6 +80,38 @@ namespace WpfApp
             if (undoStack.Count > 0)
             {
                 LogTextBox.Document = undoStack.Pop();
+                isFirstLetterInLine = isFirstLetterInLineStack.Pop();
+            }
+        }
+
+        // Hook Method
+
+        private void RemarkTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            RemarkTextBox.Document.Blocks.Clear();
+        }
+
+        private void RemarkTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(GetRemarkTextBoxText()))
+            {
+                SetRemarkTextBoxPlaceholder();
+            }
+        }
+
+        private void LogTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+
+                LogAppendText(Environment.NewLine);
+                isFirstLetterInLine = true;
+
+                if (LogTextBox.Document.Blocks.LastBlock is Paragraph lastParagraph)
+                {
+                    LogTextBox.CaretPosition = lastParagraph.ContentEnd;
+                }
             }
         }
 
@@ -80,6 +120,7 @@ namespace WpfApp
         private void LogAppendText(string text, Brush? color = null)
         {
             undoStack.Push(CloneFlowDocument(LogTextBox.Document));
+            isFirstLetterInLineStack.Push(isFirstLetterInLine);
 
             if (LogTextBox.Document.Blocks.LastBlock is Paragraph lastParagraph)
             {
@@ -146,19 +187,6 @@ namespace WpfApp
                 return new Run(run.Text) { Foreground = run.Foreground };
             }
             return new Run();
-        }
-
-        private void RemarkTextBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            RemarkTextBox.Document.Blocks.Clear();
-        }
-
-        private void RemarkTextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(GetRemarkTextBoxText()))
-            {
-                SetRemarkTextBoxPlaceholder();
-            }
         }
 
         private void SetRemarkTextBoxPlaceholder()
