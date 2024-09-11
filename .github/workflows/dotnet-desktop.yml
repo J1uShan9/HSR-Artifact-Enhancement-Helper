@@ -1,0 +1,67 @@
+name: .NET Core Desktop
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  pull_request:
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      Solution_Name: WpfApp.sln
+      Default_Name: WpfApp
+      Project_Name: HSR-Artifact-Enhancement-Helper
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+
+    - name: Get version from tag
+      id: get_version
+      run: |
+        $tag = if ($env:GITHUB_REF -match 'refs/tags/(.*)') { $matches[1] } else { "unknown" }
+        echo "version=$tag" >> $env:GITHUB_OUTPUT
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Build the application
+      run: msbuild $env:Solution_Name /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Rename build artifacts
+      run: |
+        $buildDir = "$env:GITHUB_WORKSPACE\bin\Release\net6.0-windows"
+        $outputDir = "$env:GITHUB_WORKSPACE\output"
+        
+        New-Item -ItemType Directory -Force -Path $outputDir
+        
+        $exePath = "$buildDir\$env:Default_Name.exe"
+        $outputPath = "$outputDir\$env:Project_Name-${{ steps.get_version.outputs.version }}.exe"
+        
+        Move-Item -Path $exePath -Destination $outputPath -Force
+
+    - name: Upload the Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ github.workspace }}/output/*
+        generate_release_notes: true
