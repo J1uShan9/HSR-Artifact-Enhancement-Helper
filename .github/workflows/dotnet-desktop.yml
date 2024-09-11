@@ -36,7 +36,7 @@ jobs:
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 6.0.x
 
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
@@ -47,17 +47,15 @@ jobs:
     - name: Build the application
       run: msbuild $env:Solution_Name /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
-    - name: Rename build artifacts
+    - name: Zip build artifacts
       run: |
         $buildDir = "$env:GITHUB_WORKSPACE\bin\Release\net6.0-windows"
         $outputDir = "$env:GITHUB_WORKSPACE\output"
-        
         New-Item -ItemType Directory -Force -Path $outputDir
-        
-        $exePath = "$buildDir\$env:Default_Name.exe"
-        $outputPath = "$outputDir\$env:Project_Name-${{ steps.get_version.outputs.version }}.exe"
-        
-        Move-Item -Path $exePath -Destination $outputPath -Force
+
+        $zipFileName = "$env:Project_Name-${{ steps.get_version.outputs.version }}.zip"
+        $zipFilePath = "$outputDir\$zipFileName"
+        Compress-Archive -Path "$buildDir\*" -DestinationPath $zipFilePath
 
     - name: Upload the Release
       uses: softprops/action-gh-release@v2
