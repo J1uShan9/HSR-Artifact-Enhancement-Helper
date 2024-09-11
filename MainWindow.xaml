@@ -65,6 +65,6 @@
                 <TextBlock Text="第三优先级: 区间外的其他词条"/>
             </StackPanel>
         </Border>
-        
+
     </Grid>
 </Window>
