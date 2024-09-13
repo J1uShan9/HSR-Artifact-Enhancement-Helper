@@ -38,18 +38,20 @@ namespace WpfApp
 
             if (!isFirstLetterInLine)
             {
-                LogAppendText("  " + outputText);
+                AppendRichText("  " + outputText);
             }
             else
             {
-                LogAppendText(outputText);
+                AppendRichText(outputText);
                 isFirstLetterInLine = false;
             }
         }
 
         private void NewlineButton_Click(object sender, RoutedEventArgs e)
         {
-            LogAppendText(Environment.NewLine);
+            AppendRichText("  // ");
+            AppendRichText(Environment.NewLine);
+
             isFirstLetterInLine = true;
         }
 
@@ -58,9 +60,9 @@ namespace WpfApp
             string remarkText = GetRemarkTextBoxText();
             if (!string.IsNullOrEmpty(remarkText) && remarkText != PlaceholderText)
             {
-                LogAppendText("(", Brushes.Black);
-                LogAppendText(remarkText, Brushes.Gray);
-                LogAppendText(")", Brushes.Black);
+                AppendRichText("(", Brushes.Black);
+                AppendRichText(remarkText, Brushes.Gray);
+                AppendRichText(")", Brushes.Black);
                 RemarkTextBox.Document.Blocks.Clear();
                 SetRemarkTextBoxPlaceholder();
             }
@@ -117,7 +119,7 @@ namespace WpfApp
 
         // Lib Functions
 
-        private void LogAppendText(string text, Brush? color = null)
+        private void AppendRichText(string text, Brush? color = null)
         {
             undoStack.Push(CloneFlowDocument(LogTextBox.Document));
             isFirstLetterInLineStack.Push(isFirstLetterInLine);
