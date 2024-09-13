@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,11 +12,11 @@ namespace WpfApp
 {
     public partial class MainWindow : Window
     {
-        private Stack<FlowDocument> undoStack = new Stack<FlowDocument>();
-        private Stack<bool> isFirstLetterInLineStack = new Stack<bool>();
+        private readonly Stack<FlowDocument> logTextStack = new Stack<FlowDocument>();
+        private readonly Stack<bool> isFirstLetterInLineStack = new Stack<bool>();
         private bool isFirstLetterInLine = true;
 
-        private const string PlaceholderText = "请输入注释...";
+        private const string placeholderText = "请输入注释...";
 
         public MainWindow()
         {
@@ -24,8 +25,9 @@ namespace WpfApp
 
             RemarkTextBox.GotFocus += RemarkTextBox_GotFocus;
             RemarkTextBox.LostFocus += RemarkTextBox_LostFocus;
-
             LogTextBox.KeyDown += LogTextBox_KeyDown;
+
+            this.Closing += MainWindow_Closing;
         }
 
         // Button_Click
@@ -58,7 +60,7 @@ namespace WpfApp
         private void RemarkButton_Click(object sender, RoutedEventArgs e)
         {
             string remarkText = GetRemarkTextBoxText();
-            if (!string.IsNullOrEmpty(remarkText) && remarkText != PlaceholderText)
+            if (!string.IsNullOrEmpty(remarkText) && remarkText != placeholderText)
             {
                 AppendRichText("(", Brushes.Black);
                 AppendRichText(remarkText, Brushes.Gray);
@@ -72,7 +74,7 @@ namespace WpfApp
         {
             if (LogTextBox.Document.Blocks.Count > 0)
             {
-                undoStack.Push(CloneFlowDocument(LogTextBox.Document));
+                logTextStack.Push(CloneFlowDocument(LogTextBox.Document));
                 LogTextBox.Document.Blocks.Clear();
             }
 
@@ -81,9 +83,9 @@ namespace WpfApp
 
         private void UndoButton_Click(object sender, RoutedEventArgs e)
         {
-            if (undoStack.Count > 0)
+            if (logTextStack.Count > 0)
             {
-                LogTextBox.Document = undoStack.Pop();
+                LogTextBox.Document = logTextStack.Pop();
                 isFirstLetterInLine = isFirstLetterInLineStack.Pop();
             }
         }
@@ -117,11 +119,16 @@ namespace WpfApp
             }
         }
 
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            SaveLogToFile();
+        }
+
         // Lib Functions
 
         private void AppendRichText(string text, Brush? color = null)
         {
-            undoStack.Push(CloneFlowDocument(LogTextBox.Document));
+            logTextStack.Push(CloneFlowDocument(LogTextBox.Document));
             isFirstLetterInLineStack.Push(isFirstLetterInLine);
 
             if (LogTextBox.Document.Blocks.LastBlock is Paragraph lastParagraph)
@@ -148,6 +155,25 @@ namespace WpfApp
                 }
                 LogTextBox.Document.Blocks.Add(paragraph);
             }
+        }
+
+        private void SaveLogToFile()
+        {
+            string dirPath = "./Logs";
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
+            }
+
+            if (LogTextBox == null || LogTextBox.Document == null) return;
+
+            string fileName = $"log-{DateTime.Now:yyyyMMdd-HHmmss}.txt";
+            string filePath = Path.Combine(dirPath, fileName);
+
+            TextRange textRange = new TextRange(LogTextBox.Document.ContentStart, LogTextBox.Document.ContentEnd);
+            string logContent = textRange.Text;
+
+            File.WriteAllText(filePath, logContent);
         }
 
         private FlowDocument CloneFlowDocument(FlowDocument original)
@@ -193,7 +219,7 @@ namespace WpfApp
 
         private void SetRemarkTextBoxPlaceholder()
         {
-            Paragraph paragraph = new Paragraph(new Run(PlaceholderText) { Foreground = Brushes.Gray });
+            Paragraph paragraph = new Paragraph(new Run(placeholderText) { Foreground = Brushes.Gray });
             RemarkTextBox.Document.Blocks.Clear();
             RemarkTextBox.Document.Blocks.Add(paragraph);
         }
