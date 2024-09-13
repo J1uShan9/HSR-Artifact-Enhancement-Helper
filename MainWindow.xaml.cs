@@ -73,6 +73,8 @@ namespace WpfApp
                 undoStack.Push(CloneFlowDocument(LogTextBox.Document));
                 LogTextBox.Document.Blocks.Clear();
             }
+
+            isFirstLetterInLine = true;
         }
 
         private void UndoButton_Click(object sender, RoutedEventArgs e)
@@ -105,13 +107,11 @@ namespace WpfApp
             {
                 e.Handled = true;
 
-                LogAppendText(Environment.NewLine);
-                isFirstLetterInLine = true;
+                TextPointer caretPosition = LogTextBox.CaretPosition;
+                LogTextBox.CaretPosition.InsertLineBreak();
+                LogTextBox.CaretPosition = caretPosition.GetNextInsertionPosition(LogicalDirection.Forward);
 
-                if (LogTextBox.Document.Blocks.LastBlock is Paragraph lastParagraph)
-                {
-                    LogTextBox.CaretPosition = lastParagraph.ContentEnd;
-                }
+                isFirstLetterInLine = true;
             }
         }
 
